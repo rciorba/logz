@@ -34,7 +34,9 @@ defmodule Logz.Nginx do
   def parse_date!(str) do
     case Regex.scan(~r{(\d+)/(\w+)/(\d+):(\d+):(\d+):(\d+) (\+|-)(\d\d)(\d\d)}, str) do
       [[_, day, month, year, hour, minute, second, off_sign, off_hour, off_min]] ->
-        {:ok, date} = NaiveDateTime.new(String.to_integer(year),
+        {:ok, date} =
+          NaiveDateTime.new(
+            String.to_integer(year),
             parse_month(month),
             String.to_integer(day),
             String.to_integer(hour),
@@ -42,13 +44,14 @@ defmodule Logz.Nginx do
             String.to_integer(second)
           )
 
-        tstamp = 
+        tstamp =
           NaiveDateTime.add(date, offset(off_sign, off_hour, off_min), :second)
           |> NaiveDateTime.diff(~N[1970-01-01 00:00:00], :second)
+
         tstamp
 
       matched ->
-        throw {:error, matched}
+        throw({:error, matched})
     end
   end
 
@@ -56,6 +59,7 @@ defmodule Logz.Nginx do
     case Regex.scan(~r{([a-zA-Z]+) ([^\s]+) [^\"]+}, request) do
       [[_, method, uri]] ->
         {method, uri}
+
       _ ->
         {nil, nil}
     end
@@ -76,6 +80,7 @@ defmodule Logz.Nginx do
          ) do
       [[_, addr, tstamp, request, status, size, user_agent]] ->
         {method, uri} = parse_request(request)
+
         {:ok,
          %{
            addr: addr,

@@ -8,8 +8,9 @@ defmodule Logz.JiffyCodec do
       err, value ->
         IO.inspect({err, value})
         IO.inspect(data)
-        throw ({err, value})
+        throw({err, value})
     end
   end
+
   def decode(json, opts \\ []), do: {:ok, :jiffy.decode(json, opts)}
 end

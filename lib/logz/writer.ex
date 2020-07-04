@@ -79,16 +79,19 @@ defmodule Logz.Writer do
     case resp do
       %{status_code: 200} ->
         :ok
+
       _ ->
         {:error, %{status: resp.status_code, body: resp.body}}
     end
   end
 
   defp index_name(doc) do
-    name = doc.tstamp
-    |> DateTime.from_unix!()
-    |> DateTime.to_date()
-    |> Date.to_string()
+    name =
+      doc.tstamp
+      |> DateTime.from_unix!()
+      |> DateTime.to_date()
+      |> Date.to_string()
+
     "logstash-#{name}"
   end
 
@@ -98,10 +101,14 @@ defmodule Logz.Writer do
   def flush(batch, index_name) do
     IO.inspect(index_name)
     # IO.inspect(batch)
-    Elastix.Bulk.post("http://localhost:9200/", batch, index: index_name, httpoison_options: [timeout: 180_000])
+    Elastix.Bulk.post("http://localhost:9200/", batch,
+      index: index_name,
+      httpoison_options: [timeout: 180_000]
+    )
   end
 
-  def add_to_batch(id, doc, {batch, batch_size, current_index_name, index}) when batch_size >= 200 do
+  def add_to_batch(id, doc, {batch, batch_size, current_index_name, index})
+      when batch_size >= 200 do
     flush(batch, current_index_name)
     add_to_batch(id, doc, {[], 0, current_index_name, index})
   end
@@ -109,9 +116,10 @@ defmodule Logz.Writer do
   def add_to_batch(id, doc, {batch, batch_size, current_index_name, index}) do
     {
       [
-        %{index: %{_id: id}}, doc | batch
+        %{index: %{_id: id}},
+        doc | batch
       ],
-      batch_size+1,
+      batch_size + 1,
       current_index_name,
       index
     }
@@ -123,19 +131,23 @@ defmodule Logz.Writer do
     # IO.inspect(ts)
     b = <<ts::size(64), i::size(64)>>
     <<q1::size(32), q2::size(32), q3::size(32), q4::size(32)>> = b
+
     <<:erlang.bxor(
-      :erlang.bxor(q1, q2),
-      :erlang.bxor(q3, q4)
-    )::size(32)>>
+        :erlang.bxor(q1, q2),
+        :erlang.bxor(q3, q4)
+      )::size(32)>>
     |> Base.encode16()
+
     # <<q1::size(32), q2::size(32), q3::size(32), q4::size(32)>>
   end
 
   defp strformat(tstamp) do
     dt = DateTime.from_unix!(tstamp)
+
     :io_lib.format(
       "~4..0B-~2..0B-~2..0BT~2..0B:~2..0B:~2..0B",
-      [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second])
+      [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second]
+    )
     |> to_string
   end
 
@@ -145,10 +157,12 @@ defmodule Logz.Writer do
     tstamp = doc[:tstamp] |> strformat()
     doc = Map.put(doc, :tstamp, tstamp)
     IO.puts(:jiffy.encode(doc, [:use_nil, :pretty]))
+
     case doc_index_name do
       ^current_index_name ->
         # IO.inspect({1, current_index_name})
         add_to_batch(id, doc, {batch, batch_size, current_index_name, index})
+
       new_index_name ->
         # IO.inspect({2, new_index_name})
         flush(batch, current_index_name)
@@ -162,5 +176,5 @@ defmodule Logz.Writer.Collectible do
 end
 
 # defimpl Collectible, for: Logz.Writer.Collectible do
-  
+
 # end

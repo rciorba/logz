@@ -7,7 +7,9 @@ defmodule Logz do
 
   defp parse(doc) do
     case Logz.Nginx.parse(doc) do
-      {:ok, data} -> data
+      {:ok, data} ->
+        data
+
       {:error, reason} ->
         Logger.error("Malformed line: #{inspect(reason)}")
         nil
@@ -15,11 +17,12 @@ defmodule Logz do
   end
 
   def import() do
-    {batch, _batch_size, index_name, _} = IO.stream(:stdio, :line)
-    |> Stream.map(&parse/1)
-    |> Stream.filter(&(not is_nil(&1)))
-    # |> Stream.map(&IO.inspect/1)
-    |> Enum.reduce({[], 0, nil, 1}, &Logz.Writer.reduce/2)
+    {batch, _batch_size, index_name, _} =
+      IO.stream(:stdio, :line)
+      |> Stream.map(&parse/1)
+      |> Stream.filter(&(not is_nil(&1)))
+      # |> Stream.map(&IO.inspect/1)
+      |> Enum.reduce({[], 0, nil, 1}, &Logz.Writer.reduce/2)
 
     Logz.Writer.flush(batch, index_name)
   end
