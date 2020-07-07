@@ -125,20 +125,23 @@ defmodule Logz.Writer do
     }
   end
 
-  def doc_id(doc, i) do
-    # <<q1::size(32), q2::size(32), q3::size(32), q4::size(32), index::32>> = :crypto.hash(:md5, "#{doc[:tstamp]}")
-    ts = doc[:tstamp]
-    # IO.inspect(ts)
-    b = <<ts::size(64), i::size(64)>>
-    <<q1::size(32), q2::size(32), q3::size(32), q4::size(32)>> = b
+  def values_to_string(doc) do
+    doc
+    |> Map.to_list()
+    |> Enum.sort()
+    |> Enum.map(fn {_, val} -> to_string(val) end)
+    |> Enum.join()
+  end
+
+  def doc_id(doc) do
+    <<q1::size(32), q2::size(32), q3::size(32), q4::size(32)>> =
+      :crypto.hash(:md5, values_to_string(doc))
 
     <<:erlang.bxor(
         :erlang.bxor(q1, q2),
         :erlang.bxor(q3, q4)
       )::size(32)>>
     |> Base.encode16()
-
-    # <<q1::size(32), q2::size(32), q3::size(32), q4::size(32)>>
   end
 
   defp strformat(tstamp) do
@@ -153,10 +156,10 @@ defmodule Logz.Writer do
 
   def reduce(doc, {batch, batch_size, current_index_name, index}) do
     doc_index_name = index_name(doc)
-    id = doc_id(doc, index)
+    id = doc_id(doc)
     tstamp = doc[:tstamp] |> strformat()
     doc = Map.put(doc, :tstamp, tstamp)
-    IO.puts(:jiffy.encode(doc, [:use_nil, :pretty]))
+    # IO.puts(:jiffy.encode(doc, [:use_nil, :pretty]))
 
     case doc_index_name do
       ^current_index_name ->

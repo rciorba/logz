@@ -1,6 +1,6 @@
 defmodule NginxTest do
   use ExUnit.Case
-  import Para
+  import Parameterize
   alias Logz.Nginx
   doctest Nginx
 
@@ -8,7 +8,7 @@ defmodule NginxTest do
     NaiveDateTime.diff(ndt, ~N[1970-01-01 00:00:00], :second)
   end
 
-  parametrized_test(
+  parameterized_test(
     "parse",
     [
       [
@@ -58,7 +58,7 @@ defmodule NginxTest do
     assert Nginx.parse!(line) == expected
   end
 
-  parametrized_test(
+  parameterized_test(
     "parse date",
     [
       [str: "07/Jun/2020:06:40:03 +0000", exp: ~N[2020-06-07 06:40:03]],
@@ -68,7 +68,7 @@ defmodule NginxTest do
     assert Nginx.parse_date!(str) == naive_to_unix(exp)
   end
 
-  parametrized_test(
+  parameterized_test(
     "parse request",
     [
       [req: "GET /foo?bar=1&baz=2 HTTP/1.1", expected: {"GET", "/foo?bar=1&baz=2"}],
@@ -84,25 +84,4 @@ defmodule NginxTest do
   ) do
     assert Nginx.parse_request(req) == expected
   end
-
-  parametrized_test "PARA 1", ok: [] do
-    assert 1 == 1
-  end
-
-  # parametrized_test "not implemented", ok: [a: 1], bad: [a: 2]
-
-  parametrized_test("PARA 2", [ok: []], do: assert(1 == 1))
-
-  parametrized_test("PARA 3", [], do: assert(1 == 1))
-
-  parametrized_test("parse_date_para", context,
-    one: [val: 1, exp: 1],
-    two: [val: 1, exp: 1]
-  ) do
-    IO.inspect(context)
-    assert val == exp
-  end
-
-  # parametrized_test "parse_date_para", ok: [], bad: [] do
-  # end
 end
