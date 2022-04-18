@@ -20,7 +20,7 @@ defmodule Logz.Writer do
 
   def create_template(es_url) do
     template = %{
-      "template" => "logstash-*",
+      "index_patterns" => ["logz-*"],
       "settings" => %{
         "number_of_shards" => 1,
         "number_of_replicas" => 0,
@@ -65,16 +65,18 @@ defmodule Logz.Writer do
       }
     }
 
-    IO.inspect("url: #{es_url}/_template/logstash")
+    IO.inspect("url: #{es_url}/_template/logz")
     template = :jiffy.encode(template, [:use_nil, :pretty])
     IO.puts(template)
 
     resp =
       HTTPoison.put!(
-        "#{es_url}/_template/logstash",
+        "#{es_url}/_template/logz",
         template,
         [{"Content-Type", "application/json"}]
       )
+
+    IO.inspect(resp)
 
     case resp do
       %{status_code: 200} ->
@@ -92,7 +94,7 @@ defmodule Logz.Writer do
       |> DateTime.to_date()
       |> Date.to_string()
 
-    "logstash-#{name}"
+    "logz-#{name}"
   end
 
   def flush([], _) do
@@ -101,7 +103,7 @@ defmodule Logz.Writer do
   def flush(batch, index_name) do
     IO.inspect(index_name)
     # IO.inspect(batch)
-    Elastix.Bulk.post("http://localhost:9200/", batch,
+    Elastix.Bulk.post("http://localhost:9220/", batch,
       index: index_name,
       httpoison_options: [timeout: 180_000]
     )

@@ -17,6 +17,8 @@ defmodule Logz do
   end
 
   def import() do
+    IO.puts("importing...")
+
     {batch, _batch_size, index_name, _} =
       IO.stream(:stdio, :line)
       |> Stream.map(&parse/1)
@@ -30,7 +32,7 @@ defmodule Logz do
   def create_template(_) do
     IO.puts("creating template")
 
-    Logz.Writer.create_template("http://localhost:9200")
+    Logz.Writer.create_template("http://localhost:9220")
     |> IO.inspect()
   end
 end
